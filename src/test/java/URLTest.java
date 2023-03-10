@@ -20,8 +20,6 @@ public class URLTest {
 
             Map<String, List<String>> headerFields = connection.getHeaderFields();
 
-
-
             JSONObject responseObject = new JSONObject();
 
             for(Map.Entry<String, List<String>> entry: headerFields.entrySet()) {
@@ -32,6 +30,7 @@ public class URLTest {
                 Object value = entry.getValue();
                 responseObject.put(key,value);
             }
+            System.out.println(responseObject.toString(4));
 
 
 //            System.out.println(headerFields);
