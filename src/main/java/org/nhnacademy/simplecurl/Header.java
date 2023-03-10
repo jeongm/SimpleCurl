@@ -4,12 +4,12 @@ import org.json.JSONObject;
 
 import java.net.URL;
 
-public class Request {
+public class Header {
     URL url;
     String method;
     JSONObject requestObject = new JSONObject();
 
-    public Request(URL url) {
+    public Header(URL url) {
         this.url = url;
         this.method = "GET";
         requestObject.put("HOST",url.getHost());

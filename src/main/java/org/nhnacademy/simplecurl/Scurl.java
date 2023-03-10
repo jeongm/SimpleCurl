@@ -3,18 +3,18 @@ package org.nhnacademy.simplecurl;
 import org.apache.commons.cli.*;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
 public class Scurl {
     public static void main(String[] args) {
+        JSONObject responseObject = new JSONObject();
+        JSONObject requestObject = new JSONObject();
+
         Options options = new Options();
 
         options.addOption("v","verbose, 요청, 응답 헤더를 출력합니다.");
@@ -31,62 +31,51 @@ public class Scurl {
             URL url = new URL(cmd.getArgList().get(cmd.getArgList().size()-1));
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
 
-            JSONObject requestObject = new JSONObject();
             String method = "GET";
             requestObject.put("",method+" / HTTP/1.1");
             requestObject.put("HOST",url.getHost());
             requestObject.put("User-Agent","scurl/1.0");
             requestObject.put("Accept", "*/*");
 
-
-//            for(Option commandLine : cmd.getOptions()) {
-//                System.out.println(commandLine.getValuesList());
-//            }
-
-            for(Option option : cmd.getOptions()) {
-                System.out.println(option.getOpt() + " : " +option.getValue());
-            }
-
-
             if (cmd.hasOption("h")) {
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("scurl",options);
             } else {
                 if (cmd.hasOption("H")) {
-                    connection.setRequestMethod("POST");
-//                connection.setRequestProperty(, );
+                    String line = cmd.getOptionValue("H");
+                    String[] linesplit = line.split(":");
+                    connection.setRequestProperty(linesplit[0],linesplit[1]);
                 }
                 if (cmd.hasOption("d")) {
-                    connection.setRequestMethod(method);
-                    connection.connect();
-                    requestObject.put("data",cmd.getOptionValue("d"));
+                    String data = cmd.getOptionValue("d");
+                    responseObject.put("data",data);
                 }
                 if (cmd.hasOption("X")) { // GET 요청 http://httpbin.org/getmethod 명을 명시적으로 지정
-                    //세팅 후 커넥트
                     method = cmd.getOptionValue("X");
 
                     connection.setRequestMethod(method);
                     connection.connect();
                     requestObject.put("",connection.getRequestMethod()+" / HTTP/1.1");
-
                 }
                 if (cmd.hasOption("L")) {
+                    /**
+                     * 리다이렉션???
+                     */
 
                 }
                 if (cmd.hasOption("H")) {
-                    connection.setRequestMethod(method);
-                    connection.connect();
                     requestObject.put("X-Custom-Header",cmd.getOptionValue("H"));
                 }
+                if(cmd.hasOption("F")) {
+                    String file = cmd.getOptionValue("F").substring(cmd.getOptionValue("F").lastIndexOf("@")+1);
+                    connection.setRequestProperty("multipart/form-data",file);
+                    connection.connect();
+                }
                 if(cmd.hasOption("v")) {
-
-//                for(Option option : cmd.getOptions()) {
-//                    System.out.println(option.getOpt() + " : " +option.getValue());
-//                }
-
                     Map<String, List<String>> responseHeaderFields = connection.getHeaderFields();
-                    JSONObject responseObject = new JSONObject();
                     for(Map.Entry<String, List<String>> entry: responseHeaderFields.entrySet()) {
                         String key = entry.getKey();
                         if(entry.getKey() == null) {
@@ -103,20 +92,26 @@ public class Scurl {
 
 
                 }
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(System.out));
 
-                    String line;
-                    while((line = reader.readLine()) != null) { // response 출력
-                        System.out.println(line);
-                    }
+                StringBuilder writer = new StringBuilder();
+                String line;
+                while((line = input.readLine()) != null) { // response 출력
+                    writer.append(line);
+                    writer.append('\n');
+                }
+
+                JSONObject body = new JSONObject(writer.toString());
+                output.write(body.toString(4));
+                output.newLine();
+                output.flush();
 
             }
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
         } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+        } catch (IOException | ParseException e) {
+            Thread.currentThread().interrupt();
         } catch (IndexOutOfBoundsException e) {
             System.out.println("scurl: try scurl '-h' for more information");
         }
