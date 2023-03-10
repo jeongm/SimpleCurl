@@ -5,12 +5,12 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
 public class Scurl {
+
     public static void main(String[] args) {
         JSONObject responseObject = new JSONObject();
         JSONObject requestObject = new JSONObject();
@@ -46,8 +46,8 @@ public class Scurl {
             } else {
                 if (cmd.hasOption("H")) {
                     String line = cmd.getOptionValue("H");
-                    String[] linesplit = line.split(":");
-                    connection.setRequestProperty(linesplit[0],linesplit[1]);
+                    String[] lines = line.split(":");
+                    connection.setRequestProperty(lines[0],lines[1]);
                 }
                 if (cmd.hasOption("d")) {
                     String data = cmd.getOptionValue("d");
@@ -60,11 +60,7 @@ public class Scurl {
                     connection.connect();
                     requestObject.put("",connection.getRequestMethod()+" / HTTP/1.1");
                 }
-                if (cmd.hasOption("L")) {
-                    /**
-                     * 리다이렉션???
-                     */
-
+                if (cmd.hasOption("L")) { // ...
                 }
                 if (cmd.hasOption("H")) {
                     requestObject.put("X-Custom-Header",cmd.getOptionValue("H"));
@@ -90,7 +86,6 @@ public class Scurl {
                     //응답헤더
                     System.out.println(responseObject.toString(4));
 
-
                 }
                 BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 BufferedWriter output = new BufferedWriter(new OutputStreamWriter(System.out));
@@ -108,8 +103,6 @@ public class Scurl {
                 output.flush();
 
             }
-        } catch (MalformedURLException e) {
-            Thread.currentThread().interrupt();
         } catch (IOException | ParseException e) {
             Thread.currentThread().interrupt();
         } catch (IndexOutOfBoundsException e) {
